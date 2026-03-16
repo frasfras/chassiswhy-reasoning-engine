@@ -62,5 +62,26 @@
     "difficulty": "Expert",
     "desc": "Explain your strengths and weaknesses.",
     "target_role": "Company Recruiter"
+  },
+  {
+    "id": 11,
+    "title": "Race Engineer",
+    "difficulty": "Medium",
+    "desc": "A race engineer that explains cause and effect of vehicle behavior",
+    "target_role": "Warehouse Dispatcher"
+  },
+  {
+    "id": 10,
+    "title": "Dispatch Warehouse Order",
+    "difficulty": "Medium",
+    "desc": "A delivery driver has arrived. Verify the order, confirm the items are picked and packed, and dispatch the shipment.",
+    "target_role": "Warehouse Dispatcher"
+  },
+  {
+    "id": 11,
+    "title": "Golf Pro swing",
+    "difficulty": "Medium",
+    "desc": "A Pga golfer that explains aspects of golf swing",
+    "target_role": "Golf Pro"
   }
 ]

@@ -237,6 +237,17 @@ class GeminiLive:
                                             response={"result": result}
                                         ))
                                         await event_queue.put({"type": "tool_call", "name": func_name, "args": args, "result": result})
+                                    elif func_name == "create_why_card":
+                                        # Emit Why Card directly to the frontend
+                                        await event_queue.put({
+                                            "type": "why_card",
+                                            "data": args
+                                        })
+                                        function_responses.append(types.FunctionResponse(
+                                            name=func_name,
+                                            id=fc.id,
+                                            response={"result": "Why Card sent to client"}
+                                        ))
                                     else:
                                         # Unknown tool, assume client-side
                                         client_tool_calls.append({

@@ -40,7 +40,7 @@ The spoken explanation plays as audio. A Why Card appears on screen with the str
 ### 1. Clone the repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/frasfras/chassiswhy-reasoning-engine
 cd chassiswhy-reasoning-engine
 ```
 

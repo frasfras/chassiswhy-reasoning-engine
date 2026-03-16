@@ -16,6 +16,7 @@
 
 import "./audio-visualizer.js";
 import "./live-transcript.js";
+import "./why-card.js";
 import {
   GeminiLiveAPI,
   MultimodalLiveResponseType,
@@ -166,6 +167,37 @@ class ViewChat extends HTMLElement {
              <audio-visualizer id="user-viz"></audio-visualizer>
           </div>
         </div>
+
+        <!-- Why Cards -->
+        <why-card-display style="width: 100%; padding: 0 var(--spacing-md);"></why-card-display>
+
+        <style>
+          .why-card {
+            background: var(--color-surface);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-md) var(--spacing-lg);
+            margin-bottom: var(--spacing-md);
+            box-shadow: var(--shadow-sm);
+            animation: fadeSlideIn 0.3s ease;
+          }
+          .why-card h3 {
+            margin: 0 0 var(--spacing-sm);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--color-accent-primary);
+          }
+          .why-card p {
+            margin: 4px 0;
+            font-size: 0.95rem;
+            line-height: 1.5;
+          }
+          @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+          }
+        </style>
 
         <style>
           .chat-cta-btn {
@@ -426,6 +458,28 @@ class ViewChat extends HTMLElement {
 
     this.client.addFunction(completeMissionTool);
 
+    // Define Why Card Tool
+    const createWhyCardTool = new FunctionCallDefinition(
+      "create_why_card",
+      "Generate a cause-effect reasoning card",
+      {
+        type: "OBJECT",
+        properties: {
+          cause: { type: "STRING" },
+          mechanism: { type: "STRING" },
+          effect: { type: "STRING" },
+        },
+        required: ["cause", "mechanism", "effect"],
+      },
+      ["cause", "mechanism", "effect"]
+    );
+
+    createWhyCardTool.functionToCall = (args) => {
+      console.log("🃏 [App] Why Card created:", args);
+    };
+
+    this.client.addFunction(createWhyCardTool);
+
     // Setup client callbacks for logging
     this.client.onConnectionStarted = () => {
       console.log("🚀 [Gemini] Connection started");
@@ -452,6 +506,14 @@ class ViewChat extends HTMLElement {
             this.client.callFunction(fc.name, fc.args);
           });
         }
+      } else if (response.type === MultimodalLiveResponseType.WHY_CARD) {
+        console.log("🃏 [App] Why Card received:", response.data);
+        this.dispatchEvent(
+          new CustomEvent("why-card", {
+            bubbles: true,
+            detail: response.data,
+          })
+        );
       } else if (
         response.type === MultimodalLiveResponseType.INPUT_TRANSCRIPTION
       ) {
@@ -519,64 +581,29 @@ class ViewChat extends HTMLElement {
             ? this._mission.target_role || "a local native speaker"
             : "a conversational partner";
 
-          let systemInstruction = "";
+          // ChassisWhy Reasoning Engine Prompt
+          const systemInstruction = `
+ the ChassisWhy Reasoning Engine.
 
-          if (mode === "immergo_teacher") {
-            // Teacher Mode Prompt
-            systemInstruction = `
-ROLEPLAY INSTRUCTION:
-You are acting as **${targetRole}**, a native speaker of ${language}.
-The user is a language learner (native speaker of ${fromLanguage}) trying to: "${missionTitle}" (${missionDesc}).
-Your goal is to be a PROACTIVE LANGUAGE MENTOR while staying in character as ${targetRole}.
+When the user asks any question, you MUST respond using the cause → mechanism → effect framework:
 
-TEACHING PROTOCOL:
-1. **Gentle Corrections**: If the user makes a clear mistake, respond in character first, then briefly provide a friendly correction or a "more natural way to say that" in ${fromLanguage}.
-2. **Vocabulary Boost**: Every few turns, suggest 1-2 relevant words or idioms in ${language} that fit the current situation and explain their meaning in ${fromLanguage}.
-3. **Mini-Checks**: Occasionally (every 3-4 turns), ask the user a quick "How would you say...?" question in ${fromLanguage} related to the mission to test their recall.
-4. **Scaffolding**: If the user is hesitant, provide the start of a sentence in ${language} or give them two options to choose from to keep the momentum.
-5. **Mixed-Language Support**: Use ${fromLanguage} for teaching moments, but always pivot back to ${language} to maintain the immersive feel.
+1. CAUSE: Identify the root cause or initiating condition behind the phenomenon or event.
+2. MECHANISM: Explain the process or chain of events that connects the cause to the outcome.
+3. EFFECT: Describe the resulting outcome or consequence.
 
-INTERACTION GUIDELINES:
-1. Prioritize the flow of conversation—don't let the teaching feel like a lecture.
-2. Utilize the proactive audio feature: do not respond until the user has clearly finished their thought.
+SPOKEN EXPLANATION:
+Deliver your reasoning as a clear, natural spoken explanation in complete sentences. Speak directly to the user as if explaining to a curious, intelligent person.
 
-MISSION COMPLETION:
-When the user has successfully achieved the mission objective:
-1. Give a warm congratulatory message in ${language}, then translate the praise into ${fromLanguage}.
-2. THEN call the "complete_mission" tool.
-3. Set 'score' to 0 (Zero) as this is a learning-focused practice session.
-4. Provide 3 specific takeaways (grammar tips or new words) in the feedback list in ${fromLanguage}.
+JSON WHY CARD:
+After your spoken explanation, output a JSON Why Card on its own line in the following exact format:
+{"cause": "<concise cause>", "mechanism": "<concise mechanism>", "effect": "<concise effect>"}
+
+GUIDELINES:
+- Always answer every question, no matter the topic.
+- Keep the spoken explanation concise but complete — typically 3–5 sentences.
+- The JSON Why Card fields must each be a single non-empty sentence.
+- Do not refuse to answer or ask clarifying questions before providing the framework response.
 `;
-          } else {
-            // Immersive Mode Prompt (Default)
-            systemInstruction = `
-ROLEPLAY INSTRUCTION:
-You are acting as **${targetRole}**, a native speaker of ${language}.
-The user is a language learner (native speaker of ${fromLanguage}) trying to: "${missionTitle}" (${missionDesc}).
-Your goal is to play your role (${targetRole}) naturally. Do not act as an AI assistant. Act as the person.
-Speak in the accent and tone of the role.
-
-INTERACTION GUIDELINES:
-1. It is up to you if you want to directly speak back, or speak out what you think the user is saying in your native language before responding.
-2. Utilising the proactive audio feature, do not respond until it is necessary (i.e. the user has finished their turn).
-3. Be helpful but strict about language practice. It is just like speaking to a multilingual person.
-4. You cannot proceed without the user speaking the target language (${language}) themselves.
-5. If you need to give feedback, corrections, or translations, use the user's native language (${fromLanguage}).
-
-NO FREE RIDES POLICY:
-If the user asks for help in ${fromLanguage} (e.g., "please can you repeat"), you MUST NOT simply answer.
-Instead, force them to say the phrase in the target language (${language}).
-For example, say: "You mean to say [Insert Translation in ${language}]" (provided in ${fromLanguage}) and wait for them to repeat it.
-Do not continue the conversation until they attempt the phrase in ${language}.
-
-MISSION COMPLETION:
-When the user has successfully achieved the mission objective declared in the scenario:
-1. Speak a brief congratulatory message (in character) and say goodbye.
-2. THEN call the "complete_mission" tool.
-3. Assign a score based on strict criteria: 1 for struggling/English reliance (Tiro), 2 for capable but imperfect (Proficiens), 3 for native-level fluency (Peritus).
-4. Provide 3 specific pointers or compliments in the feedback list (in the user's native language: ${fromLanguage}).
-`;
-          }
 
           console.log(
             "📝 [App] Setting system instructions for",

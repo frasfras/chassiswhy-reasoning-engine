@@ -31,6 +31,7 @@ export const MultimodalLiveResponseType = {
   ERROR: "ERROR",
   INPUT_TRANSCRIPTION: "INPUT_TRANSCRIPTION",
   OUTPUT_TRANSCRIPTION: "OUTPUT_TRANSCRIPTION",
+  WHY_CARD: "WHY_CARD",
 };
 
 /**
@@ -81,6 +82,10 @@ export class MultimodalLiveResponseMessage {
         console.log("🎯 🛠️ TOOL CALL response", data?.toolCall);
         this.type = MultimodalLiveResponseType.TOOL_CALL;
         this.data = data?.toolCall;
+      } else if (data?.type === "why_card") {
+        console.log("🃏 WHY CARD response", data.data);
+        this.type = MultimodalLiveResponseType.WHY_CARD;
+        this.data = data.data;
       } else if (parts?.length && parts[0].text) {
         console.log("💬 TEXT response", parts[0].text);
         this.data = parts[0].text;

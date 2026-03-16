@@ -167,7 +167,7 @@ class ViewSplash extends HTMLElement {
         <!-- Main Content -->
         <div class="content-wrapper">
 
-          <h1 class="mystic-title">Immersive Language Learning</h1>
+          <h1 class="mystic-title">ChassisWHY</h1>
 
           <p style="
             font-family: 'Playfair Display', serif;
@@ -179,14 +179,16 @@ class ViewSplash extends HTMLElement {
             text-align: center;
             max-width: 600px;
           ">
-            Intense immersive language learning experience.
+            Discover the causes behind everyday questions.</br>
+            Real-time AI reasoning with voice and Why Cards.
           </p>
 
           <div style="margin-top: var(--spacing-lg);">
             <p style="font-size: 1.3rem; opacity: 0.6; color: var(--color-text-secondary); text-align: center; line-height: 1.6;">
               Powered by <br>
               <a href="https://docs.cloud.google.com/vertex-ai/generative-ai/docs/live-api" target="_blank" class="powered-by-link">
-                Gemini Live API on Vertex AI
+               
+                Real-time AI reasoning by Gemini Live on Vertex Ai
               </a>
             </p>
           </div>
